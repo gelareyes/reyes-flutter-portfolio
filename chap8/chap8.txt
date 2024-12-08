@@ -1,0 +1,248 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Journal App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const HomeScreen(),
+      routes: {
+        '/calendar': (context) => const CalendarPage(),
+        '/mood': (context) => const MoodPage(),
+        '/notes': (context) => const NotesPage(),
+      },
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  final List<Map<String, String>> _journalEntries = []; // List to hold journal entries
+  final TextEditingController _titleController = TextEditingController(); // Text controller for title input
+  final TextEditingController _contentController = TextEditingController(); // Text controller for content input
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>(); // Global key for AnimatedList
+
+  // Function to add a new journal entry
+  void _addEntry() {
+    if (_titleController.text.isNotEmpty && _contentController.text.isNotEmpty) {
+      final newEntry = {
+        'title': _titleController.text,
+        'content': _contentController.text,
+        'date': DateTime.now().toString(),
+      };
+
+      setState(() {
+        _journalEntries.insert(0, newEntry); // Insert at the beginning of the list
+      });
+
+      // Animate the new entry addition
+      _listKey.currentState?.insertItem(0);
+      
+      _titleController.clear(); // Clear the title field after adding
+      _contentController.clear(); // Clear the content field after adding
+    }
+  }
+
+  // Function to delete a journal entry
+  void _deleteEntry(int index) {
+    final removedEntry = _journalEntries[index];
+    setState(() {
+      _journalEntries.removeAt(index); // Remove the entry from the list
+    });
+
+    // Animate the deleted entry with fade-out
+    _listKey.currentState?.removeItem(
+      index,
+      (context, animation) => FadeTransition(
+        opacity: animation,
+        child: ListTile(
+          title: Text(removedEntry['title']!),
+          subtitle: Text('Date: ${removedEntry['date']!}'),
+        ),
+      ),
+    );
+  }
+
+  // Dialog to add a new journal entry
+  void _showAddEntryDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Journal Entry'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(hintText: 'Enter Title'),
+              ),
+              TextField(
+                controller: _contentController,
+                decoration: const InputDecoration(hintText: 'Enter Content'),
+                maxLines: 4, // Allow multi-line content
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _addEntry();
+              },
+              child: const Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Build the journal entries section with animation
+  Widget _buildJournalEntriesSection() {
+    return _journalEntries.isEmpty
+        ? const Center(child: Text('No journal entries added yet!'))
+        : AnimatedList(
+            key: _listKey,
+            initialItemCount: _journalEntries.length,
+            itemBuilder: (context, index, animation) {
+              final entry = _journalEntries[index];
+              return FadeTransition(
+                opacity: animation, // Fade-in effect
+                child: Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    title: Text(entry['title']!),
+                    subtitle: Text('Date: ${entry['date']!}'),
+                    isThreeLine: true,
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        _deleteEntry(index); // Delete the entry on button click
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Journal App'),
+        centerTitle: true,
+        backgroundColor: Colors.grey, // Set background color to gray
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () {
+              Navigator.pushNamed(context, '/calendar'); // Navigate to Calendar page
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.mood),
+            onPressed: () {
+              Navigator.pushNamed(context, '/mood'); // Navigate to Mood page
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.note),
+            onPressed: () {
+              Navigator.pushNamed(context, '/notes'); // Navigate to Notes page
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: _buildJournalEntriesSection(), // Display journal entries with animation
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddEntryDialog, // Show dialog to add new entry
+        tooltip: 'Add Entry',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+// Calendar Page
+class CalendarPage extends StatelessWidget {
+  const CalendarPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Calendar'),
+        backgroundColor: Colors.grey,
+      ),
+      body: const Center(
+        child: Text('This is the Calendar Page'),
+      ),
+    );
+  }
+}
+
+// Mood Page
+class MoodPage extends StatelessWidget {
+  const MoodPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Mood Tracker'),
+        backgroundColor: Colors.grey,
+      ),
+      body: const Center(
+        child: Text('This is the Mood Page'),
+      ),
+    );
+  }
+}
+
+// Notes Page
+class NotesPage extends StatelessWidget {
+  const NotesPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Notes'),
+        backgroundColor: Colors.grey,
+      ),
+      body: const Center(
+        child: Text('This is the Notes Page'),
+      ),
+    );
+  }
+}floatingActionButton: FloatingActionButton(
+        onPressed: _addNote, // Add note when floating action button is pressed
+        tooltip: 'Add Note',
+        child: const Icon(Icons.edit),

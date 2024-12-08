@@ -1,0 +1,163 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Journal App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const HomeScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final List<Map<String, String>> _journalEntries = []; // List to hold journal entries
+  final TextEditingController _titleController = TextEditingController(); // Text controller for title input
+  final TextEditingController _contentController = TextEditingController(); // Text controller for content input
+
+  // Function to add a new journal entry
+  void _addEntry() {
+    if (_titleController.text.isNotEmpty && _contentController.text.isNotEmpty) {
+      setState(() {
+        _journalEntries.add({
+          'title': _titleController.text,
+          'content': _contentController.text,
+          'date': DateTime.now().toString(),
+        });
+        _titleController.clear(); // Clear the title field after adding
+        _contentController.clear(); // Clear the content field after adding
+      });
+    }
+  }
+
+  // Function to delete a journal entry
+  void _deleteEntry(int index) {
+    setState(() {
+      _journalEntries.removeAt(index); // Remove the entry from the list
+    });
+  }
+
+  // Dialog to add a new journal entry
+  void _showAddEntryDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Journal Entry'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(hintText: 'Enter Title'),
+              ),
+              TextField(
+                controller: _contentController,
+                decoration: const InputDecoration(hintText: 'Enter Content'),
+                maxLines: 4, // Allow multi-line content
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _addEntry();
+              },
+              child: const Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Build the journal entries section
+  Widget _buildJournalEntriesSection() {
+    return _journalEntries.isEmpty
+        ? const Center(child: Text('No journal entries added yet!'))
+        : ListView.builder(
+            itemCount: _journalEntries.length,
+            itemBuilder: (context, index) {
+              final entry = _journalEntries[index];
+              return Dismissible(
+                key: Key(entry['title']!),
+                onDismissed: (direction) {
+                  _deleteEntry(index);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Entry deleted')),
+                  );
+                },
+                background: Container(color: Colors.red), // Background color when swiped
+                child: Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    title: Text(entry['title']!),
+                    subtitle: Text('Date: ${entry['date']!}'),
+                    isThreeLine: true,
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        _deleteEntry(index); // Delete the entry on button click
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Journal App'),
+        centerTitle: true,
+        backgroundColor: Colors.blue,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              // Navigate to the settings page (not implemented in this example)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Settings clicked!')),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: _buildJournalEntriesSection(), // Display journal entries
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddEntryDialog, // Show dialog to add new entry
+        tooltip: 'Add Entry',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}

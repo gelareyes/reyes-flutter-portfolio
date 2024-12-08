@@ -1,0 +1,4 @@
+floatingActionButton: FloatingActionButton(
+        onPressed: _addNote, // Add note when floating action button is pressed
+        tooltip: 'Add Note',
+        child: const Icon(Icons.edit),
